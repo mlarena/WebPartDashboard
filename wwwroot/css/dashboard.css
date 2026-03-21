@@ -1,0 +1,148 @@
+/* Общие стили */
+body {
+    background-color: #f8f9fa;
+}
+
+/* Стили для GridStack */
+.grid-stack {
+    background: transparent;
+}
+
+.grid-stack-item-content {
+    background: transparent !important;
+}
+
+/* Стили для веб-частей */
+.webpart {
+    transition: all 0.3s ease;
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.webpart:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1) !important;
+}
+
+.webpart .card-header {
+    cursor: move;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    transition: background-color 0.2s;
+}
+
+.webpart .card-header:hover {
+    background-color: #f8f9fa !important;
+}
+
+.webpart .card-header .btn {
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.webpart .card-header:hover .btn {
+    opacity: 1;
+}
+
+.webpart .card-body {
+    background: white;
+}
+
+/* Стили для таблиц */
+.table-responsive {
+    margin: -0.5rem;
+}
+
+.table {
+    font-size: 0.875rem;
+}
+
+.table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    border-top: none;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f5f5f5;
+}
+
+/* Стили для графиков */
+canvas {
+    max-height: 100%;
+    width: 100% !important;
+}
+
+/* Анимации */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.grid-stack-item {
+    animation: fadeIn 0.3s ease;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .grid-stack-item {
+        width: 100% !important;
+        left: 0 !important;
+    }
+    
+    .webpart .card-header {
+        padding: 0.75rem;
+    }
+    
+    .webpart .card-title {
+        font-size: 1rem;
+    }
+    
+    .btn-group {
+        flex-wrap: wrap;
+    }
+}
+
+/* Стили для скроллбара */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Кастомные стили для информеров */
+.alert {
+    border-radius: 8px;
+    border-left: 4px solid;
+}
+
+.alert-info {
+    border-left-color: #0dcaf0;
+}
+
+.alert-warning {
+    border-left-color: #ffc107;
+}
+
+.alert-danger {
+    border-left-color: #dc3545;
+}

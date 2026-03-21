@@ -1,0 +1,69 @@
+@model DashboardViewModel
+
+@{
+    ViewData["Title"] = "Моя панель управления";
+}
+
+<div class="container-fluid px-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-5 mb-0">@ViewData["Title"]</h1>
+            <p class="text-muted">Управляйте вашими веб-частями: добавляйте, перемещайте и настраивайте</p>
+        </div>
+        <div class="col text-end">
+            <div class="btn-group">
+                <button type="button" class="btn btn-primary btn-lg dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-plus-lg"></i> Добавить веб-часть
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#" onclick="addWebPart('DataTable')">
+                        <i class="bi bi-table"></i> Таблица данных
+                    </a></li>
+                    <li><a class="dropdown-item" href="#" onclick="addWebPart('Chart')">
+                        <i class="bi bi-graph-up"></i> График
+                    </a></li>
+                    <li><a class="dropdown-item" href="#" onclick="addWebPart('Informer')">
+                        <i class="bi bi-info-circle"></i> Информер
+                    </a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="grid-stack" id="dashboard-grid">
+        @foreach (var webPart in Model.WebParts)
+        {
+            <div class="grid-stack-item" 
+                 gs-id="@webPart.Id"
+                 gs-x="@webPart.PositionX" 
+                 gs-y="@webPart.PositionY"
+                 gs-w="@webPart.Width" 
+                 gs-h="@webPart.Height"
+                 data-webpart-id="@webPart.Id">
+                <div class="grid-stack-item-content">
+                    @await Html.PartialAsync("_WebPart", webPart)
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            console.log('Document ready, initializing dashboard...');
+            
+            // Инициализация GridStack
+            if (typeof initializeGridStack === 'function') {
+                initializeGridStack();
+            }
+            
+            // Загрузка данных для всех веб-частей
+            if (typeof loadAllWebPartsData === 'function') {
+                setTimeout(function() {
+                    loadAllWebPartsData();
+                }, 500);
+            }
+        });
+    </script>
+}
