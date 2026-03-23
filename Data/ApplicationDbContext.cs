@@ -13,6 +13,7 @@ public class ApplicationDbContext : DbContext
     }
     
     public DbSet<TaskItem> Tasks { get; set; }
+    public DbSet<User> Users { get; set; }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -24,7 +25,10 @@ public class ApplicationDbContext : DbContext
             
         modelBuilder.Entity<TaskItem>()
             .HasIndex(t => t.AssignedTo);
-            
+
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.UserName)
+            .IsUnique();            
         // Добавляем демо-данные с фиксированными значениями
         modelBuilder.Entity<TaskItem>().HasData(
             new TaskItem

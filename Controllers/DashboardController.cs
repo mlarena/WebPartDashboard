@@ -2,12 +2,13 @@ using Microsoft.AspNetCore.Mvc;
 using WebPartDashboard.Models;
 using WebPartDashboard.Services;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebPartDashboard.Controllers;
 
+[Authorize]
 public class DashboardController : Controller
-{
-    private readonly IWebPartService _webPartService;
+{    private readonly IWebPartService _webPartService;
     private readonly ILogger<DashboardController> _logger;
 
     public DashboardController(IWebPartService webPartService, ILogger<DashboardController> logger)

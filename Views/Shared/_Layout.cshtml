@@ -35,12 +35,39 @@
                                 <i class="bi bi-house-door me-1"></i>Дашборд
                             </a>
                         </li>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="" asp-controller="Admin" asp-action="Index">
+                                    <i class="bi bi-people me-1"></i>Пользователи
+                                </a>
+                            </li>
+                        }
                     </ul>
-                    <div class="text-white me-3">
-                        <i class="bi bi-person-circle"></i> Пользователь
+                    <div class="d-flex align-items-center">
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <div class="text-white me-3">
+                                <i class="bi bi-person-circle me-1"></i> @User.Identity.Name
+                                @if (User.IsInRole("Admin"))
+                                {
+                                    <span class="badge bg-danger ms-1" style="font-size: 0.7rem;">Admin</span>
+                                }
+                            </div>
+                            <form asp-controller="Auth" asp-action="Logout" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-outline-light btn-sm">
+                                    <i class="bi bi-box-arrow-right me-1"></i>Выход
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <a asp-controller="Auth" asp-action="Login" class="btn btn-outline-light btn-sm">
+                                <i class="bi bi-box-arrow-in-right me-1"></i>Вход
+                            </a>
+                        }
                     </div>
-                </div>
-            </div>
+                </div>            </div>
         </nav>
     </header>
     
