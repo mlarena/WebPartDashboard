@@ -155,7 +155,6 @@ function loadWebPartData(id) {
     });
 }
 
-// Отображение контента веб-части в зависимости от типа
 function renderWebPartContent($container, type, data) {
     if (!data) {
         $container.html('<div class="alert alert-warning">Нет данных для отображения</div>');
@@ -177,9 +176,35 @@ function renderWebPartContent($container, type, data) {
         case 'Informer':
             renderInformer($container, data);
             break;
+        case 'Tasks':
+            renderTasksWebPart($container);
+            break;
         default:
             $container.html('<div class="alert alert-warning">Неизвестный тип веб-части</div>');
     }
+}
+
+function renderTasksWebPart($container) {
+    $container.html(`
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Загрузка...</span>
+            </div>
+            <p class="mt-2 text-muted">Загрузка задач...</p>
+        </div>
+    `);
+    
+    $.get('/Tasks/GetTasksWebPart', function(html) {
+        $container.html(html);
+    }).fail(function(xhr) {
+        console.error('Error loading tasks webpart:', xhr);
+        $container.html(`
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                Ошибка загрузки веб-части задач: ${xhr.status} ${xhr.statusText}
+            </div>
+        `);
+    });
 }
 
 // Отображение таблицы данных
