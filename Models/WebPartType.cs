@@ -4,5 +4,6 @@ public enum WebPartType
 {
     DataTable,
     Chart,
-    Informer
+    Informer,
+    Tasks
 }

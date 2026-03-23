@@ -1,0 +1,376 @@
+@model List<TaskItem>
+
+<div class="tasks-webpart">
+    <div class="mb-3">
+        <button class="btn btn-primary btn-sm" onclick="showAddTaskModal()">
+            <i class="bi bi-plus-lg"></i> Добавить задачу
+        </button>
+        <button class="btn btn-outline-secondary btn-sm" onclick="refreshTasks()">
+            <i class="bi bi-arrow-repeat"></i> Обновить
+        </button>
+    </div>
+    
+    <div class="tasks-stats mb-3">
+        <div class="row g-2">
+            <div class="col">
+                <div class="card bg-primary text-white">
+                    <div class="card-body py-2">
+                        <div class="d-flex justify-content-between">
+                            <span>Всего задач</span>
+                            <strong id="totalTasks">0</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card bg-success text-white">
+                    <div class="card-body py-2">
+                        <div class="d-flex justify-content-between">
+                            <span>Выполнено</span>
+                            <strong id="completedTasks">0</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card bg-warning text-white">
+                    <div class="card-body py-2">
+                        <div class="d-flex justify-content-between">
+                            <span>В работе</span>
+                            <strong id="inProgressTasks">0</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+        <table class="table table-hover table-sm">
+            <thead class="table-light sticky-top">
+                <tr>
+                    <th style="width: 40px"></th>
+                    <th>Название</th>
+                    <th>Статус</th>
+                    <th>Приоритет</th>
+                    <th>Срок</th>
+                    <th>Ответственный</th>
+                    <th style="width: 80px">Действия</th>
+                </tr>
+            </thead>
+            <tbody id="tasksTableBody">
+                <tr>
+                    <td colspan="7" class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Загрузка...</span>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Модальное окно для добавления/редактирования задачи -->
+<div class="modal fade" id="taskModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="taskModalTitle">Добавить задачу</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="taskForm">
+                    <input type="hidden" id="taskId" />
+                    <div class="mb-3">
+                        <label for="taskTitle" class="form-label">Название *</label>
+                        <input type="text" class="form-control" id="taskTitle" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="taskDescription" class="form-label">Описание</label>
+                        <textarea class="form-control" id="taskDescription" rows="3"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="taskStatus" class="form-label">Статус</label>
+                            <select class="form-select" id="taskStatus">
+                                <option value="0">Новая</option>
+                                <option value="1">В работе</option>
+                                <option value="2">На проверке</option>
+                                <option value="3">Завершена</option>
+                                <option value="4">Отложена</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="taskPriority" class="form-label">Приоритет</label>
+                            <select class="form-select" id="taskPriority">
+                                <option value="0">Низкий</option>
+                                <option value="1">Средний</option>
+                                <option value="2">Высокий</option>
+                                <option value="3">Критический</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="taskDueDate" class="form-label">Срок выполнения</label>
+                            <input type="date" class="form-control" id="taskDueDate">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="taskAssignedTo" class="form-label">Ответственный</label>
+                            <input type="text" class="form-control" id="taskAssignedTo">
+                        </div>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="taskIsCompleted">
+                        <label class="form-check-label" for="taskIsCompleted">
+                            Выполнено
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" onclick="saveTask()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentEditId = null;
+    
+    function loadTasks() {
+        $.get('/api/TasksApi', function(tasks) {
+            renderTasks(tasks);
+            loadStats();
+        }).fail(function() {
+            $('#tasksTableBody').html(`
+                <tr>
+                    <td colspan="7" class="text-center text-danger">
+                        Ошибка загрузки задач
+                    </td>
+                </tr>
+            `);
+        });
+    }
+    
+    function loadStats() {
+        $.get('/api/TasksApi/stats', function(stats) {
+            $('#totalTasks').text(stats.total);
+            $('#completedTasks').text(stats.completed);
+            $('#inProgressTasks').text(stats.inProgress);
+        });
+    }
+    
+    function renderTasks(tasks) {
+        if (!tasks || tasks.length === 0) {
+            $('#tasksTableBody').html(`
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-5">
+                        <i class="bi bi-inbox fs-1"></i>
+                        <p class="mt-2">Нет задач</p>
+                    </td>
+                </tr>
+            `);
+            return;
+        }
+        
+        let html = '';
+        tasks.forEach(task => {
+            const statusClass = getStatusClass(task.status);
+            const priorityClass = getPriorityClass(task.priority);
+            const dueDate = task.dueDate ? new Date(task.dueDate).toLocaleDateString('ru') : '-';
+            
+            html += `
+                <tr>
+                    <td>
+                        <input type="checkbox" ${task.isCompleted ? 'checked' : ''} 
+                               onchange="toggleComplete(${task.id}, this.checked)">
+                    </td>
+                    <td>
+                        <strong>${escapeHtml(task.title)}</strong>
+                        ${task.description ? `<br><small class="text-muted">${escapeHtml(task.description.substring(0, 50))}</small>` : ''}
+                    </td>
+                    <td><span class="badge ${statusClass}">${getStatusText(task.status)}</span></td>
+                    <td><span class="badge ${priorityClass}">${getPriorityText(task.priority)}</span></td>
+                    <td>${dueDate}</td>
+                    <td>${escapeHtml(task.assignedTo || '-')}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="editTask(${task.id})">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteTask(${task.id})">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        $('#tasksTableBody').html(html);
+    }
+    
+    function getStatusClass(status) {
+        switch(status) {
+            case 0: return 'bg-secondary';
+            case 1: return 'bg-primary';
+            case 2: return 'bg-warning';
+            case 3: return 'bg-success';
+            case 4: return 'bg-danger';
+            default: return 'bg-secondary';
+        }
+    }
+    
+    function getStatusText(status) {
+        switch(status) {
+            case 0: return 'Новая';
+            case 1: return 'В работе';
+            case 2: return 'На проверке';
+            case 3: return 'Завершена';
+            case 4: return 'Отложена';
+            default: return '-';
+        }
+    }
+    
+    function getPriorityClass(priority) {
+        switch(priority) {
+            case 0: return 'bg-info';
+            case 1: return 'bg-primary';
+            case 2: return 'bg-warning';
+            case 3: return 'bg-danger';
+            default: return 'bg-secondary';
+        }
+    }
+    
+    function getPriorityText(priority) {
+        switch(priority) {
+            case 0: return 'Низкий';
+            case 1: return 'Средний';
+            case 2: return 'Высокий';
+            case 3: return 'Критический';
+            default: return '-';
+        }
+    }
+    
+    function showAddTaskModal() {
+        currentEditId = null;
+        $('#taskModalTitle').text('Добавить задачу');
+        $('#taskForm')[0].reset();
+        $('#taskId').val('');
+        $('#taskIsCompleted').prop('checked', false);
+        $('#taskStatus').val(0);
+        $('#taskPriority').val(1);
+        new bootstrap.Modal(document.getElementById('taskModal')).show();
+    }
+    
+    function editTask(id) {
+        $.get(`/api/TasksApi/${id}`, function(task) {
+            currentEditId = task.id;
+            $('#taskModalTitle').text('Редактировать задачу');
+            $('#taskId').val(task.id);
+            $('#taskTitle').val(task.title);
+            $('#taskDescription').val(task.description);
+            $('#taskStatus').val(task.status);
+            $('#taskPriority').val(task.priority);
+            $('#taskDueDate').val(task.dueDate ? task.dueDate.split('T')[0] : '');
+            $('#taskAssignedTo').val(task.assignedTo);
+            $('#taskIsCompleted').prop('checked', task.isCompleted);
+            new bootstrap.Modal(document.getElementById('taskModal')).show();
+        });
+    }
+    
+    function saveTask() {
+        const taskData = {
+            id: currentEditId || 0,
+            title: $('#taskTitle').val(),
+            description: $('#taskDescription').val(),
+            status: parseInt($('#taskStatus').val()),
+            priority: parseInt($('#taskPriority').val()),
+            dueDate: $('#taskDueDate').val() || null,
+            assignedTo: $('#taskAssignedTo').val(),
+            isCompleted: $('#taskIsCompleted').is(':checked')
+        };
+        
+        if (!taskData.title) {
+            alert('Введите название задачи');
+            return;
+        }
+        
+        const method = currentEditId ? 'PUT' : 'POST';
+        const url = currentEditId ? `/api/TasksApi/${currentEditId}` : '/api/TasksApi';
+        
+        $.ajax({
+            url: url,
+            type: method,
+            contentType: 'application/json',
+            data: JSON.stringify(taskData),
+            success: function() {
+                bootstrap.Modal.getInstance(document.getElementById('taskModal')).hide();
+                loadTasks();
+            },
+            error: function(xhr) {
+                alert('Ошибка: ' + (xhr.responseJSON?.error || 'Неизвестная ошибка'));
+            }
+        });
+    }
+    
+    function deleteTask(id) {
+        if (confirm('Удалить задачу?')) {
+            $.ajax({
+                url: `/api/TasksApi/${id}`,
+                type: 'DELETE',
+                success: function() {
+                    loadTasks();
+                },
+                error: function() {
+                    alert('Ошибка при удалении');
+                }
+            });
+        }
+    }
+    
+    function toggleComplete(id, isCompleted) {
+        $.get(`/api/TasksApi/${id}`, function(task) {
+            task.isCompleted = isCompleted;
+            if (isCompleted) {
+                task.status = 3;
+            } else {
+                task.status = 0;
+            }
+            $.ajax({
+                url: `/api/TasksApi/${id}`,
+                type: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify(task),
+                success: function() {
+                    loadTasks();
+                }
+            });
+        });
+    }
+    
+    function refreshTasks() {
+        loadTasks();
+    }
+    
+    // Загружаем задачи при загрузке страницы
+    $(document).ready(function() {
+        loadTasks();
+    });
+</script>
+
+<style>
+    .tasks-stats .card {
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    .tasks-stats .card:hover {
+        transform: translateY(-2px);
+    }
+    .sticky-top {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+</style>

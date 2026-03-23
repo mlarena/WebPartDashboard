@@ -116,47 +116,53 @@ public class WebPartService : IWebPartService
     }
 
     private string GetDefaultData(WebPartType type)
+{
+    return type switch
     {
-        return type switch
+        WebPartType.DataTable => JsonConvert.SerializeObject(new
         {
-            WebPartType.DataTable => JsonConvert.SerializeObject(new
+            Columns = new[] { "ID", "Название", "Статус", "Дата создания", "Ответственный" },
+            Rows = new[]
             {
-                Columns = new[] { "ID", "Название", "Статус", "Дата создания", "Ответственный" },
-                Rows = new[]
-                {
-                    new[] { "1", "Разработка дашборда", "В работе", "2024-01-10", "Иванов И." },
-                    new[] { "2", "Тестирование модуля", "Завершен", "2024-01-15", "Петров П." },
-                    new[] { "3", "Внедрение системы", "Планируется", "2024-02-01", "Сидоров С." },
-                    new[] { "4", "Обучение персонала", "В работе", "2024-01-20", "Кузнецова А." },
-                    new[] { "5", "Написание документации", "Отложено", "2024-01-25", "Волков В." }
-                }
-            }),
-            
-            WebPartType.Chart => JsonConvert.SerializeObject(new
+                new[] { "1", "Разработка дашборда", "В работе", "2024-01-10", "Иванов И." },
+                new[] { "2", "Тестирование модуля", "Завершен", "2024-01-15", "Петров П." },
+                new[] { "3", "Внедрение системы", "Планируется", "2024-02-01", "Сидоров С." },
+                new[] { "4", "Обучение персонала", "В работе", "2024-01-20", "Кузнецова А." },
+                new[] { "5", "Написание документации", "Отложено", "2024-01-25", "Волков В." }
+            }
+        }),
+        
+        WebPartType.Chart => JsonConvert.SerializeObject(new
+        {
+            Type = "bar",
+            Labels = new[] { "Янв", "Фев", "Мар", "Апр", "Май", "Июн" },
+            Data = new[] { 45, 62, 78, 85, 92, 88 },
+            BackgroundColor = "rgba(54, 162, 235, 0.5)",
+            BorderColor = "rgba(54, 162, 235, 1)"
+        }),
+        
+        WebPartType.Informer => JsonConvert.SerializeObject(new
+        {
+            Message = "Добро пожаловать в систему управления проектами!",
+            Type = "info",
+            LastUpdate = DateTime.Now,
+            Details = new[]
             {
-                Type = "bar",
-                Labels = new[] { "Янв", "Фев", "Мар", "Апр", "Май", "Июн" },
-                Data = new[] { 45, 62, 78, 85, 92, 88 },
-                BackgroundColor = "rgba(54, 162, 235, 0.5)",
-                BorderColor = "rgba(54, 162, 235, 1)"
-            }),
-            
-            WebPartType.Informer => JsonConvert.SerializeObject(new
-            {
-                Message = "Добро пожаловать в систему управления проектами!",
-                Type = "info",
-                LastUpdate = DateTime.Now,
-                Details = new[]
-                {
-                    "У вас 3 новых уведомления",
-                    "2 задачи требуют внимания",
-                    "Система работает стабильно"
-                }
-            }),
-            
-            _ => "{}"
-        };
-    }
+                "У вас 3 новых уведомления",
+                "2 задачи требуют внимания",
+                "Система работает стабильно"
+            }
+        }),
+        
+        WebPartType.Tasks => JsonConvert.SerializeObject(new
+        {
+            Type = "tasks",
+            Message = "Tasks webpart"
+        }),
+        
+        _ => "{}"
+    };
+}
 
     public Task UpdateWebPartAsync(WebPart webPart)
     {

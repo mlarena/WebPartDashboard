@@ -641,6 +641,38 @@ function loadDashboardLayout() {
     });
 }
 
+function renderWebPartContent($container, type, data) {
+    if (!data) {
+        $container.html('<div class="alert alert-warning">Нет данных для отображения</div>');
+        return;
+    }
+    
+    if (data.Error) {
+        $container.html(`<div class="alert alert-danger">${data.Error}</div>`);
+        return;
+    }
+    
+    switch(type) {
+        case 'DataTable':
+            renderDataTable($container, data);
+            break;
+        case 'Chart':
+            renderChart($container, data);
+            break;
+        case 'Informer':
+            renderInformer($container, data);
+            break;
+        case 'Tasks':
+            // Загружаем представление для задач
+            $.get('/Tasks/GetTasksWebPart', function(html) {
+                $container.html(html);
+            });
+            break;
+        default:
+            $container.html('<div class="alert alert-warning">Неизвестный тип веб-части</div>');
+    }
+}
+
 // Экспорт функций в глобальную область видимости
 window.addWebPart = addWebPart;
 window.removeWebPart = removeWebPart;

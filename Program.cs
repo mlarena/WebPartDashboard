@@ -1,10 +1,20 @@
+using Microsoft.EntityFrameworkCore;
+using WebPartDashboard.Data;
 using WebPartDashboard.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddControllers(); // Для API контроллеров
+
+// Добавляем DbContext
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Регистрируем сервисы
 builder.Services.AddScoped<IWebPartService, WebPartService>();
+builder.Services.AddScoped<ITaskService, TaskService>();
 
 var app = builder.Build();
 
@@ -26,16 +36,13 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Dashboard}/{action=Index}/{id?}");
 
-// Выводим информацию о запуске
-app.Lifetime.ApplicationStarted.Register(() =>
+app.MapControllers(); // Добавляем для API контроллеров
+
+// Создаем базу данных при запуске
+using (var scope = app.Services.CreateScope())
 {
-    Console.WriteLine("=== Application Started ===");
-    using (var scope = app.Services.CreateScope())
-    {
-        var service = scope.ServiceProvider.GetRequiredService<IWebPartService>();
-        var webParts = service.GetUserWebPartsAsync(1).Result;
-        Console.WriteLine($"User 1 has {webParts.Count} webparts at startup");
-    }
-});
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    dbContext.Database.Migrate();
+}
 
 app.Run();
