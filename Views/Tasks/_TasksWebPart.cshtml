@@ -1,52 +1,51 @@
 @model List<TaskItem>
+@{
+    // Генерация уникального ID для каждого экземпляра веб-части, 
+    // чтобы избежать конфликтов при наличии нескольких таких частей на дашборде.
+    var uniqueId = Guid.NewGuid().ToString("N");
+}
 
-<div class="tasks-webpart">
-    <div class="mb-3">
-        <button class="btn btn-primary btn-sm" onclick="showAddTaskModal()">
-            <i class="bi bi-plus-lg"></i> Добавить задачу
-        </button>
-        <button class="btn btn-outline-secondary btn-sm" onclick="refreshTasks()">
-            <i class="bi bi-arrow-repeat"></i> Обновить
-        </button>
-    </div>
+<!-- Основной контейнер веб-части задач с использованием Flexbox для динамической высоты -->
+<div class="tasks-webpart d-flex flex-column h-100" id="tasks-container-@uniqueId">
     
-    <div class="tasks-stats mb-3">
-        <div class="row g-2">
-            <div class="col">
-                <div class="card bg-primary text-white">
-                    <div class="card-body py-2">
-                        <div class="d-flex justify-content-between">
-                            <span>Всего задач</span>
-                            <strong id="totalTasks">0</strong>
-                        </div>
-                    </div>
-                </div>
+    <!-- Панель управления: кнопки и выбор размера страницы -->
+    <div class="mb-2">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="btn-group">
+                <button class="btn btn-primary btn-sm btn-add-task">
+                    <i class="bi bi-plus-lg"></i> Добавить задачу
+                </button>
+                <button class="btn btn-outline-secondary btn-sm btn-refresh-tasks">
+                    <i class="bi bi-arrow-repeat"></i> Обновить
+                </button>
             </div>
-            <div class="col">
-                <div class="card bg-success text-white">
-                    <div class="card-body py-2">
-                        <div class="d-flex justify-content-between">
-                            <span>Выполнено</span>
-                            <strong id="completedTasks">0</strong>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col">
-                <div class="card bg-warning text-white">
-                    <div class="card-body py-2">
-                        <div class="d-flex justify-content-between">
-                            <span>В работе</span>
-                            <strong id="inProgressTasks">0</strong>
-                        </div>
-                    </div>
-                </div>
+            
+            <div class="d-flex align-items-center">
+                <label class="me-2 small text-muted">Показывать по:</label>
+                <select class="form-select form-select-sm select-page-size" style="width: auto;">
+                    <option value="10" selected>10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                </select>
             </div>
         </div>
     </div>
-    
-    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-        <table class="table table-hover table-sm">
+
+    <!-- Верхний блок пагинации -->
+    <div class="pagination-container top-pagination mb-2">
+        <div class="d-flex justify-content-between align-items-center px-2">
+            <div class="text-muted small">
+                Показано <span class="pagination-info">0-0 из 0</span>
+            </div>
+            <nav>
+                <ul class="pagination pagination-sm mb-0 tasks-pagination"></ul>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Таблица задач с прокруткой, занимающая всё свободное место (flex-grow-1) -->
+    <div class="table-responsive flex-grow-1" style="overflow-y: auto;">
+        <table class="table table-hover table-sm mb-0">
             <thead class="table-light sticky-top">
                 <tr>
                     <th style="width: 40px"></th>
@@ -58,7 +57,7 @@
                     <th style="width: 80px">Действия</th>
                 </tr>
             </thead>
-            <tbody id="tasksTableBody">
+            <tbody class="tasks-table-body">
                 <tr>
                     <td colspan="7" class="text-center py-5">
                         <div class="spinner-border text-primary" role="status">
@@ -69,308 +68,292 @@
             </tbody>
         </table>
     </div>
-</div>
 
-<!-- Модальное окно для добавления/редактирования задачи -->
-<div class="modal fade" id="taskModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="taskModalTitle">Добавить задачу</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    <!-- Нижний блок пагинации -->
+    <div class="pagination-container bottom-pagination mt-3">
+        <div class="d-flex justify-content-between align-items-center px-2">
+            <div class="text-muted small">
+                Показано <span class="pagination-info">0-0 из 0</span>
             </div>
-            <div class="modal-body">
-                <form id="taskForm">
-                    <input type="hidden" id="taskId" />
-                    <div class="mb-3">
-                        <label for="taskTitle" class="form-label">Название *</label>
-                        <input type="text" class="form-control" id="taskTitle" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="taskDescription" class="form-label">Описание</label>
-                        <textarea class="form-control" id="taskDescription" rows="3"></textarea>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="taskStatus" class="form-label">Статус</label>
-                            <select class="form-select" id="taskStatus">
-                                <option value="0">Новая</option>
-                                <option value="1">В работе</option>
-                                <option value="2">На проверке</option>
-                                <option value="3">Завершена</option>
-                                <option value="4">Отложена</option>
-                            </select>
+            <nav>
+                <ul class="pagination pagination-sm mb-0 tasks-pagination"></ul>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Модальное окно для добавления/редактирования задачи. 
+         ID уникален для каждого экземпляра веб-части. -->
+    <div class="modal fade task-modal" id="taskModal-@uniqueId" tabindex="-1" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Добавить задачу</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form class="task-form">
+                        <input type="hidden" class="task-id" />
+                        <div class="mb-3">
+                            <label class="form-label">Название *</label>
+                            <input type="text" class="form-control task-title" required>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="taskPriority" class="form-label">Приоритет</label>
-                            <select class="form-select" id="taskPriority">
-                                <option value="0">Низкий</option>
-                                <option value="1">Средний</option>
-                                <option value="2">Высокий</option>
-                                <option value="3">Критический</option>
-                            </select>
+                        <div class="mb-3">
+                            <label class="form-label">Описание</label>
+                            <textarea class="form-control task-description" rows="3"></textarea>
                         </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="taskDueDate" class="form-label">Срок выполнения</label>
-                            <input type="date" class="form-control" id="taskDueDate">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Статус</label>
+                                <select class="form-select task-status">
+                                    <option value="0">Новая</option>
+                                    <option value="1">В работе</option>
+                                    <option value="2">На проверке</option>
+                                    <option value="3">Завершена</option>
+                                    <option value="4">Отложена</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Приоритет</label>
+                                <select class="form-select task-priority">
+                                    <option value="0">Низкий</option>
+                                    <option value="1">Средний</option>
+                                    <option value="2">Высокий</option>
+                                    <option value="3">Критический</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="taskAssignedTo" class="form-label">Ответственный</label>
-                            <input type="text" class="form-control" id="taskAssignedTo">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Срок выполнения</label>
+                                <input type="date" class="form-control task-due-date">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Ответственный</label>
+                                <input type="text" class="form-control task-assigned-to">
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" id="taskIsCompleted">
-                        <label class="form-check-label" for="taskIsCompleted">
-                            Выполнено
-                        </label>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                <button type="button" class="btn btn-primary" onclick="saveTask()">Сохранить</button>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input task-is-completed" type="checkbox">
+                            <label class="form-check-label">Выполнено</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary btn-save-task">Сохранить</button>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    let currentEditId = null;
-    
-    function loadTasks() {
-        $.get('/api/TasksApi', function(tasks) {
-            renderTasks(tasks);
-            loadStats();
-        }).fail(function() {
-            $('#tasksTableBody').html(`
-                <tr>
-                    <td colspan="7" class="text-center text-danger">
-                        Ошибка загрузки задач
-                    </td>
-                </tr>
-            `);
-        });
-    }
-    
-    function loadStats() {
-        $.get('/api/TasksApi/stats', function(stats) {
-            $('#totalTasks').text(stats.total);
-            $('#completedTasks').text(stats.completed);
-            $('#inProgressTasks').text(stats.inProgress);
-        });
-    }
-    
-    function renderTasks(tasks) {
-        if (!tasks || tasks.length === 0) {
-            $('#tasksTableBody').html(`
-                <tr>
-                    <td colspan="7" class="text-center text-muted py-5">
-                        <i class="bi bi-inbox fs-1"></i>
-                        <p class="mt-2">Нет задач</p>
-                    </td>
-                </tr>
-            `);
-            return;
+    // Изолированный JavaScript для управления логикой веб-части задач
+    (function() {
+        const containerId = 'tasks-container-@uniqueId';
+        const $container = $('#' + containerId);
+        const $tableBody = $container.find('.tasks-table-body');
+        const $paginations = $container.find('.tasks-pagination');
+        const $infos = $container.find('.pagination-info');
+        const $pageSizeSelect = $container.find('.select-page-size');
+        const $modalEl = $container.find('.task-modal');
+        const $form = $container.find('.task-form');
+
+        let currentEditId = null;
+        let currentPage = 1;
+        let pageSize = 10;
+        let totalTasksCount = 0;
+
+        // Получение или инициализация экземпляра модального окна Bootstrap
+        function getModalInstance() {
+            // Перемещаем модальное окно в body для корректного отображения поверх GridStack
+            if (!$modalEl.parent().is('body')) {
+                $modalEl.appendTo('body');
+            }
+
+            let modal = bootstrap.Modal.getInstance($modalEl[0]);
+            if (!modal) {
+                modal = new bootstrap.Modal($modalEl[0], {
+                    backdrop: 'static',
+                    keyboard: true
+                });
+            }
+            return modal;
         }
-        
-        let html = '';
-        tasks.forEach(task => {
-            const statusClass = getStatusClass(task.status);
-            const priorityClass = getPriorityClass(task.priority);
-            const dueDate = task.dueDate ? new Date(task.dueDate).toLocaleDateString('ru') : '-';
+
+        // Очистка стилей body после закрытия модального окна
+        $modalEl.on('hidden.bs.modal', function () {
+            $('.modal-backdrop').remove();
+            $('body').removeClass('modal-open').css('padding-right', '');
+        });
+
+        // Загрузка списка задач с учетом пагинации
+        function loadTasks() {
+            const skip = (currentPage - 1) * pageSize;
+            $.get('/api/TasksApi/stats', function(stats) {
+                totalTasksCount = stats.total;
+                $.get('/api/TasksApi', { skip: skip, take: pageSize }, function(tasks) {
+                    renderTasks(tasks);
+                    renderPagination();
+                }).fail(function() {
+                    $tableBody.html('<tr><td colspan="7" class="text-center text-danger">Ошибка загрузки задач</td></tr>');
+                });
+            });
+        }
+
+        // Отрисовка кнопок пагинации
+        function renderPagination() {
+            const totalPages = Math.ceil(totalTasksCount / pageSize);
+            if (totalTasksCount === 0) {
+                $paginations.empty();
+                $infos.text('0-0 из 0');
+                return;
+            }
+            const start = (currentPage - 1) * pageSize + 1;
+            const end = Math.min(currentPage * pageSize, totalTasksCount);
+            $infos.text(start + '-' + end + ' из ' + totalTasksCount);
             
-            html += `
-                <tr>
-                    <td>
-                        <input type="checkbox" ${task.isCompleted ? 'checked' : ''} 
-                               onchange="toggleComplete(${task.id}, this.checked)">
-                    </td>
-                    <td>
-                        <strong>${escapeHtml(task.title)}</strong>
-                        ${task.description ? `<br><small class="text-muted">${escapeHtml(task.description.substring(0, 50))}</small>` : ''}
-                    </td>
-                    <td><span class="badge ${statusClass}">${getStatusText(task.status)}</span></td>
-                    <td><span class="badge ${priorityClass}">${getPriorityText(task.priority)}</span></td>
-                    <td>${dueDate}</td>
-                    <td>${escapeHtml(task.assignedTo || '-')}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="editTask(${task.id})">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteTask(${task.id})">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-            `;
-        });
-        
-        $('#tasksTableBody').html(html);
-    }
-    
-    function getStatusClass(status) {
-        switch(status) {
-            case 0: return 'bg-secondary';
-            case 1: return 'bg-primary';
-            case 2: return 'bg-warning';
-            case 3: return 'bg-success';
-            case 4: return 'bg-danger';
-            default: return 'bg-secondary';
-        }
-    }
-    
-    function getStatusText(status) {
-        switch(status) {
-            case 0: return 'Новая';
-            case 1: return 'В работе';
-            case 2: return 'На проверке';
-            case 3: return 'Завершена';
-            case 4: return 'Отложена';
-            default: return '-';
-        }
-    }
-    
-    function getPriorityClass(priority) {
-        switch(priority) {
-            case 0: return 'bg-info';
-            case 1: return 'bg-primary';
-            case 2: return 'bg-warning';
-            case 3: return 'bg-danger';
-            default: return 'bg-secondary';
-        }
-    }
-    
-    function getPriorityText(priority) {
-        switch(priority) {
-            case 0: return 'Низкий';
-            case 1: return 'Средний';
-            case 2: return 'Высокий';
-            case 3: return 'Критический';
-            default: return '-';
-        }
-    }
-    
-    function showAddTaskModal() {
-        currentEditId = null;
-        $('#taskModalTitle').text('Добавить задачу');
-        $('#taskForm')[0].reset();
-        $('#taskId').val('');
-        $('#taskIsCompleted').prop('checked', false);
-        $('#taskStatus').val(0);
-        $('#taskPriority').val(1);
-        new bootstrap.Modal(document.getElementById('taskModal')).show();
-    }
-    
-    function editTask(id) {
-        $.get(`/api/TasksApi/${id}`, function(task) {
-            currentEditId = task.id;
-            $('#taskModalTitle').text('Редактировать задачу');
-            $('#taskId').val(task.id);
-            $('#taskTitle').val(task.title);
-            $('#taskDescription').val(task.description);
-            $('#taskStatus').val(task.status);
-            $('#taskPriority').val(task.priority);
-            $('#taskDueDate').val(task.dueDate ? task.dueDate.split('T')[0] : '');
-            $('#taskAssignedTo').val(task.assignedTo);
-            $('#taskIsCompleted').prop('checked', task.isCompleted);
-            new bootstrap.Modal(document.getElementById('taskModal')).show();
-        });
-    }
-    
-    function saveTask() {
-        const taskData = {
-            id: currentEditId || 0,
-            title: $('#taskTitle').val(),
-            description: $('#taskDescription').val(),
-            status: parseInt($('#taskStatus').val()),
-            priority: parseInt($('#taskPriority').val()),
-            dueDate: $('#taskDueDate').val() || null,
-            assignedTo: $('#taskAssignedTo').val(),
-            isCompleted: $('#taskIsCompleted').is(':checked')
-        };
-        
-        if (!taskData.title) {
-            alert('Введите название задачи');
-            return;
-        }
-        
-        const method = currentEditId ? 'PUT' : 'POST';
-        const url = currentEditId ? `/api/TasksApi/${currentEditId}` : '/api/TasksApi';
-        
-        $.ajax({
-            url: url,
-            type: method,
-            contentType: 'application/json',
-            data: JSON.stringify(taskData),
-            success: function() {
-                bootstrap.Modal.getInstance(document.getElementById('taskModal')).hide();
-                loadTasks();
-            },
-            error: function(xhr) {
-                alert('Ошибка: ' + (xhr.responseJSON?.error || 'Неизвестная ошибка'));
+            let html = '';
+            html += '<li class="page-item ' + (currentPage === 1 ? 'disabled' : '') + '"><a class="page-link btn-prev" href="#">&laquo;</a></li>';
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, startPage + 4);
+            if (endPage - startPage < 4) startPage = Math.max(1, endPage - 4);
+            
+            for (let i = startPage; i <= endPage; i++) {
+                if (i < 1) continue;
+                html += '<li class="page-item ' + (i === currentPage ? 'active' : '') + '"><a class="page-link btn-page" data-page="' + i + '" href="#">' + i + '</a></li>';
             }
-        });
-    }
-    
-    function deleteTask(id) {
-        if (confirm('Удалить задачу?')) {
-            $.ajax({
-                url: `/api/TasksApi/${id}`,
-                type: 'DELETE',
-                success: function() {
-                    loadTasks();
-                },
-                error: function() {
-                    alert('Ошибка при удалении');
-                }
+            html += '<li class="page-item ' + (currentPage === totalPages ? 'disabled' : '') + '"><a class="page-link btn-next" href="#">&raquo;</a></li>';
+            $paginations.html(html);
+        }
+
+        // Отрисовка строк таблицы задач
+        function renderTasks(tasks) {
+            if (!tasks || tasks.length === 0) {
+                $tableBody.html('<tr><td colspan="7" class="text-center text-muted py-5"><i class="bi bi-inbox fs-1"></i><p class="mt-2">Нет задач</p></td></tr>');
+                return;
+            }
+            let html = '';
+            tasks.forEach(function(task) {
+                const statusClass = getStatusClass(task.status);
+                const priorityClass = getPriorityClass(task.priority);
+                const dueDate = task.dueDate ? new Date(task.dueDate).toLocaleDateString('ru') : '-';
+                const descHtml = task.description ? '<br><small class="text-muted">' + escapeHtml(task.description.substring(0, 50)) + '</small>' : '';
+                html += '<tr>' +
+                    '<td><input type="checkbox" class="task-check" data-id="' + task.id + '" ' + (task.isCompleted ? 'checked' : '') + '></td>' +
+                    '<td><strong>' + escapeHtml(task.title) + '</strong>' + descHtml + '</td>' +
+                    '<td><span class="badge ' + statusClass + '">' + getStatusText(task.status) + '</span></td>' +
+                    '<td><span class="badge ' + priorityClass + '">' + getPriorityText(task.priority) + '</span></td>' +
+                    '<td>' + dueDate + '</td>' +
+                    '<td>' + escapeHtml(task.assignedTo || '-') + '</td>' +
+                    '<td>' +
+                        '<button class="btn btn-sm btn-outline-secondary btn-edit-task" data-id="' + task.id + '"><i class="bi bi-pencil"></i></button> ' +
+                        '<button class="btn btn-sm btn-outline-danger btn-delete-task" data-id="' + task.id + '"><i class="bi bi-trash"></i></button>' +
+                    '</td>' +
+                '</tr>';
             });
+            $tableBody.html(html);
         }
-    }
-    
-    function toggleComplete(id, isCompleted) {
-        $.get(`/api/TasksApi/${id}`, function(task) {
-            task.isCompleted = isCompleted;
-            if (isCompleted) {
-                task.status = 3;
-            } else {
-                task.status = 0;
-            }
+
+        // Вспомогательные функции для стилизации статусов и приоритетов
+        function getStatusClass(s) { return ['bg-secondary', 'bg-primary', 'bg-warning', 'bg-success', 'bg-danger'][s] || 'bg-secondary'; }
+        function getStatusText(s) { return ['Новая', 'В работе', 'На проверке', 'Завершена', 'Отложена'][s] || '-'; }
+        function getPriorityClass(p) { return ['bg-info', 'bg-primary', 'bg-warning', 'bg-danger'][p] || 'bg-secondary'; }
+        function getPriorityText(p) { return ['Низкий', 'Средний', 'Высокий', 'Критический'][p] || '-'; }
+        
+        // Безопасное экранирование HTML для предотвращения XSS
+        function escapeHtml(t) {
+            if (!t) return '';
+            const map = { '&': '&', '<': '<', '>': '>', '"': '"', "'": '&#039;' };
+            return t.toString().replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+
+        // --- Обработчики событий ---
+
+        $container.on('click', '.btn-add-task', function() {
+            currentEditId = null;
+            $modalEl.find('.modal-title').text('Добавить задачу');
+            $form[0].reset();
+            $modalEl.find('.task-id').val('');
+            $modalEl.find('.task-is-completed').prop('checked', false);
+            $modalEl.find('.task-status').val(0);
+            $modalEl.find('.task-priority').val(1);
+            getModalInstance().show();
+        });
+
+        $container.on('click', '.btn-edit-task', function() {
+            const id = $(this).data('id');
+            $.get('/api/TasksApi/' + id, function(task) {
+                currentEditId = task.id;
+                $modalEl.find('.modal-title').text('Редактировать задачу');
+                $modalEl.find('.task-id').val(task.id);
+                $modalEl.find('.task-title').val(task.title);
+                $modalEl.find('.task-description').val(task.description);
+                $modalEl.find('.task-status').val(task.status);
+                $modalEl.find('.task-priority').val(task.priority);
+                $modalEl.find('.task-due-date').val(task.dueDate ? task.dueDate.split('T')[0] : '');
+                $modalEl.find('.task-assigned-to').val(task.assignedTo);
+                $modalEl.find('.task-is-completed').prop('checked', task.isCompleted);
+                getModalInstance().show();
+            });
+        });
+
+        // Сохранение задачи (POST или PUT)
+        $modalEl.find('.btn-save-task').on('click', function() {
+            const taskData = {
+                id: currentEditId || 0,
+                title: $modalEl.find('.task-title').val(),
+                description: $modalEl.find('.task-description').val(),
+                status: parseInt($modalEl.find('.task-status').val()),
+                priority: parseInt($modalEl.find('.task-priority').val()),
+                dueDate: $modalEl.find('.task-due-date').val() || null,
+                assignedTo: $modalEl.find('.task-assigned-to').val(),
+                isCompleted: $modalEl.find('.task-is-completed').is(':checked')
+            };
+            if (!taskData.title) { alert('Введите название задачи'); return; }
+            const method = currentEditId ? 'PUT' : 'POST';
+            const url = '/api/TasksApi' + (currentEditId ? '/' + currentEditId : '');
             $.ajax({
-                url: `/api/TasksApi/${id}`,
-                type: 'PUT',
-                contentType: 'application/json',
-                data: JSON.stringify(task),
+                url: url, type: method, contentType: 'application/json', data: JSON.stringify(taskData),
                 success: function() {
+                    getModalInstance().hide();
                     loadTasks();
                 }
             });
         });
-    }
-    
-    function refreshTasks() {
+
+        $container.on('click', '.btn-delete-task', function() {
+            const id = $(this).data('id');
+            if (confirm('Удалить задачу?')) {
+                $.ajax({ url: '/api/TasksApi/' + id, type: 'DELETE', success: loadTasks });
+            }
+        });
+
+        $container.on('change', '.task-check', function() {
+            const id = $(this).data('id');
+            const isCompleted = $(this).is(':checked');
+            $.get('/api/TasksApi/' + id, function(task) {
+                task.isCompleted = isCompleted;
+                task.status = isCompleted ? 3 : 0;
+                $.ajax({
+                    url: '/api/TasksApi/' + id, type: 'PUT', contentType: 'application/json',
+                    data: JSON.stringify(task), success: loadTasks
+                });
+            });
+        });
+
+        $container.on('click', '.btn-refresh-tasks', loadTasks);
+        $pageSizeSelect.on('change', function() { pageSize = parseInt($(this).val()); currentPage = 1; loadTasks(); });
+        $container.on('click', '.btn-page', function(e) { e.preventDefault(); currentPage = $(this).data('page'); loadTasks(); });
+        $container.on('click', '.btn-prev', function(e) { e.preventDefault(); if (currentPage > 1) { currentPage--; loadTasks(); } });
+        $container.on('click', '.btn-next', function(e) { e.preventDefault(); if (currentPage * pageSize < totalTasksCount) { currentPage++; loadTasks(); } });
+
+        // Первичная загрузка данных
         loadTasks();
-    }
-    
-    // Загружаем задачи при загрузке страницы
-    $(document).ready(function() {
-        loadTasks();
-    });
+    })();
 </script>
 
 <style>
-    .tasks-stats .card {
-        cursor: pointer;
-        transition: transform 0.2s;
-    }
-    .tasks-stats .card:hover {
-        transform: translateY(-2px);
-    }
-    .sticky-top {
-        position: sticky;
-        top: 0;
-        z-index: 10;
-    }
+    .sticky-top { position: sticky; top: 0; z-index: 10; }
+    .pagination-container { background: #f8f9fa; padding: 5px 0; border-radius: 4px; }
 </style>

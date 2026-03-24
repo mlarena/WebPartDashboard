@@ -16,23 +16,21 @@
                     <i class="bi bi-plus-lg"></i> Добавить веб-часть
                 </button>
                 
-                                    
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="#" onclick="addWebPart('DataTable')">
-                            <i class="bi bi-table"></i> Таблица данных
-                        </a></li>
-                        <li><a class="dropdown-item" href="#" onclick="addWebPart('Chart')">
-                            <i class="bi bi-graph-up"></i> График
-                        </a></li>
-                        <li><a class="dropdown-item" href="#" onclick="addWebPart('Informer')">
-                            <i class="bi bi-info-circle"></i> Информер
-                        </a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#" onclick="addWebPart('Tasks')">
-                            <i class="bi bi-check2-square"></i> Управление задачами
-                        </a></li>
-                    </ul>
-
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#" onclick="addWebPart('DataTable')">
+                        <i class="bi bi-table"></i> Таблица данных
+                    </a></li>
+                    <li><a class="dropdown-item" href="#" onclick="addWebPart('Chart')">
+                        <i class="bi bi-graph-up"></i> График
+                    </a></li>
+                    <li><a class="dropdown-item" href="#" onclick="addWebPart('Informer')">
+                        <i class="bi bi-info-circle"></i> Информер
+                    </a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#" onclick="addWebPart('Tasks')">
+                        <i class="bi bi-check2-square"></i> Управление задачами
+                    </a></li>
+                </ul>
             </div>
         </div>
     </div>
@@ -60,12 +58,10 @@
         $(document).ready(function() {
             console.log('Document ready, initializing dashboard...');
             
-            // Инициализация GridStack
             if (typeof initializeGridStack === 'function') {
                 initializeGridStack();
             }
             
-            // Загрузка данных для всех веб-частей
             if (typeof loadAllWebPartsData === 'function') {
                 setTimeout(function() {
                     loadAllWebPartsData();

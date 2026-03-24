@@ -4,8 +4,13 @@ using Microsoft.Extensions.Logging;
 
 namespace WebPartDashboard.Services;
 
+/// <summary>
+/// Сервис для управления конфигурацией и данными веб-частей.
+/// Использует In-memory хранилище для демонстрационных целей.
+/// </summary>
 public class WebPartService : IWebPartService
 {
+    // Хранилище веб-частей в памяти: Dictionary<UserId, List<WebPart>>
     private static readonly Dictionary<int, List<WebPart>> _userWebParts = new();
     private static int _nextId = 1;
     private static readonly object _lock = new object();
@@ -17,6 +22,7 @@ public class WebPartService : IWebPartService
         
         lock (_lock)
         {
+            // Инициализация демо-данных при первом запуске
             if (_userWebParts.Count == 0)
             {
                 InitializeDemoData();
@@ -24,6 +30,9 @@ public class WebPartService : IWebPartService
         }
     }
 
+    /// <summary>
+    /// Создание начального набора веб-частей для демонстрации.
+    /// </summary>
     private void InitializeDemoData()
     {
         var demoWebParts = new List<WebPart>
@@ -64,9 +73,12 @@ public class WebPartService : IWebPartService
         };
         
         _userWebParts[1] = demoWebParts;
-        _logger.LogInformation("Demo data initialized with {Count} webparts", demoWebParts.Count);
+        _logger.LogInformation("Демо-данные инициализированы: {Count} веб-частей", demoWebParts.Count);
     }
 
+    /// <summary>
+    /// Получение всех веб-частей конкретного пользователя.
+    /// </summary>
     public Task<List<WebPart>> GetUserWebPartsAsync(int userId)
     {
         lock (_lock)
@@ -78,6 +90,9 @@ public class WebPartService : IWebPartService
         }
     }
 
+    /// <summary>
+    /// Добавление новой веб-части с параметрами по умолчанию.
+    /// </summary>
     public Task<WebPart> AddWebPartAsync(int userId, WebPartType type, string title)
     {
         lock (_lock)
@@ -99,13 +114,15 @@ public class WebPartService : IWebPartService
             };
 
             _userWebParts[userId].Add(webPart);
-            
-            _logger.LogInformation("Добавлена новая веб-часть: {Title} (ID: {Id})", webPart.Title, webPart.Id);
+            _logger.LogInformation("Добавлена веб-часть: {Title} (ID: {Id})", webPart.Title, webPart.Id);
             
             return Task.FromResult(webPart);
         }
     }
 
+    /// <summary>
+    /// Возвращает заголовок по умолчанию для типа веб-части.
+    /// </summary>
     private string GetDefaultTitle(WebPartType type)
     {
         return type switch
@@ -118,6 +135,9 @@ public class WebPartService : IWebPartService
         };
     }
 
+    /// <summary>
+    /// Генерирует демонстрационные данные в формате JSON для разных типов веб-частей.
+    /// </summary>
     private string GetDefaultData(WebPartType type)
     {
         return type switch
@@ -157,15 +177,14 @@ public class WebPartService : IWebPartService
                 }
             }),
             
-            WebPartType.Tasks => JsonConvert.SerializeObject(new
-            {
-                Type = "tasks"
-            }),
-            
+            WebPartType.Tasks => JsonConvert.SerializeObject(new { Type = "tasks" }),
             _ => "{}"
         };
     }
 
+    /// <summary>
+    /// Обновление параметров веб-части (заголовок, позиция, размер).
+    /// </summary>
     public Task UpdateWebPartAsync(WebPart webPart)
     {
         lock (_lock)
@@ -186,10 +205,12 @@ public class WebPartService : IWebPartService
                 }
             }
         }
-        
         return Task.CompletedTask;
     }
 
+    /// <summary>
+    /// Удаление веб-части из списка пользователя.
+    /// </summary>
     public Task RemoveWebPartAsync(int webPartId)
     {
         lock (_lock)
@@ -205,10 +226,12 @@ public class WebPartService : IWebPartService
                 }
             }
         }
-        
         return Task.CompletedTask;
     }
 
+    /// <summary>
+    /// Десериализация данных веб-части для отправки на клиент.
+    /// </summary>
     public Task<object> GetWebPartDataAsync(WebPart webPart)
     {
         try
