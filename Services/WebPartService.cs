@@ -131,10 +131,10 @@ public class WebPartService : IWebPartService
             WebPartType.Chart => "График",
             WebPartType.Informer => "Информер",
             WebPartType.Tasks => "Управление задачами",
+            WebPartType.Monitoring => "Посты мониторинга",
             _ => "Новая веб-часть"
         };
     }
-
     /// <summary>
     /// Генерирует демонстрационные данные в формате JSON для разных типов веб-частей.
     /// </summary>
@@ -157,13 +157,12 @@ public class WebPartService : IWebPartService
             
             WebPartType.Chart => JsonConvert.SerializeObject(new
             {
-                Type = "bar",
-                Labels = new[] { "Янв", "Фев", "Мар", "Апр", "Май", "Июн" },
-                Data = new[] { 45, 62, 78, 85, 92, 88 },
-                BackgroundColor = "rgba(54, 162, 235, 0.5)",
-                BorderColor = "rgba(54, 162, 235, 1)"
-            }),
-            
+                type = "bar",
+                labels = new[] { "Янв", "Фев", "Мар", "Апр", "Май", "Июн" },
+                data = new[] { 45, 62, 78, 85, 92, 88 },
+                backgroundColor = "rgba(54, 162, 235, 0.5)",
+                borderColor = "rgba(54, 162, 235, 1)"
+            }),            
             WebPartType.Informer => JsonConvert.SerializeObject(new
             {
                 Message = "Добро пожаловать в систему управления проектами!",
@@ -178,10 +177,10 @@ public class WebPartService : IWebPartService
             }),
             
             WebPartType.Tasks => JsonConvert.SerializeObject(new { Type = "tasks" }),
+            WebPartType.Monitoring => JsonConvert.SerializeObject(new { Type = "monitoring" }),
             _ => "{}"
         };
     }
-
     /// <summary>
     /// Обновление параметров веб-части (заголовок, позиция, размер).
     /// </summary>

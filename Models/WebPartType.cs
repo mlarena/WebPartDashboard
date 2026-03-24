@@ -5,5 +5,6 @@ public enum WebPartType
     DataTable,
     Chart,
     Informer,
-    Tasks
+    Tasks,
+    Monitoring
 }

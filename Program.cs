@@ -73,9 +73,9 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddScoped<IWebPartService, WebPartService>();
 builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IMonitoringService, MonitoringService>();
 
 var app = builder.Build();
-
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {

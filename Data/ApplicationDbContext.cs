@@ -14,10 +14,18 @@ public class ApplicationDbContext : DbContext
     
     public DbSet<TaskItem> Tasks { get; set; }
     public DbSet<User> Users { get; set; }
+    public DbSet<MonitoringPost> MonitoringPosts { get; set; }
+    public DbSet<SensorType> SensorTypes { get; set; }
+    public DbSet<Sensor> Sensors { get; set; }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // Настройка схем для новых таблиц
+        modelBuilder.Entity<MonitoringPost>().ToTable("MonitoringPost", "public");
+        modelBuilder.Entity<SensorType>().ToTable("SensorType", "public");
+        modelBuilder.Entity<Sensor>().ToTable("Sensor", "public");
         
         // Настройка индексов
         modelBuilder.Entity<TaskItem>()
@@ -26,9 +34,16 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<TaskItem>()
             .HasIndex(t => t.AssignedTo);
 
+        // Добавляем базовые типы датчиков
+        modelBuilder.Entity<SensorType>().HasData(
+            new SensorType { Id = 1, SensorTypeName = "Температура", Description = "Датчик температуры воздуха", CreatedAt = DateTime.Now },
+            new SensorType { Id = 2, SensorTypeName = "Влажность", Description = "Датчик влажности воздуха", CreatedAt = DateTime.Now },
+            new SensorType { Id = 3, SensorTypeName = "Давление", Description = "Датчик атмосферного давления", CreatedAt = DateTime.Now }
+        );
+
         modelBuilder.Entity<User>()
             .HasIndex(u => u.UserName)
-            .IsUnique();            
+            .IsUnique();
         // Добавляем демо-данные с фиксированными значениями
         modelBuilder.Entity<TaskItem>().HasData(
             new TaskItem
