@@ -191,6 +191,6 @@ public class DashboardController : Controller
 
     private int GetCurrentUserId()
     {
-        return 1;
-    }
-}
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+        return userIdClaim != null ? int.Parse(userIdClaim.Value) : 1;
+    }}

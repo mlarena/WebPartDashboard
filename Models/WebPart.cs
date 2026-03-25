@@ -13,4 +13,6 @@ public class WebPart
     public int Height { get; set; } = 3;
     public Dictionary<string, object> Settings { get; set; } = new();
     public string Data { get; set; } = "{}";
+    
+    public int UserId { get; set; }
 }

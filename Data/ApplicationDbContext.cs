@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using WebPartDashboard.Models;
-using WebPartDashboard.Models.Entities;
-using TaskStatus = WebPartDashboard.Models.Entities.TaskStatus;
+using WebPartDashboard.Models.Entities;using TaskStatus = WebPartDashboard.Models.Entities.TaskStatus;
 using TaskPriority = WebPartDashboard.Models.Entities.TaskPriority;
 namespace WebPartDashboard.Data;
 public class ApplicationDbContext : DbContext
@@ -16,13 +16,23 @@ public class ApplicationDbContext : DbContext
     public DbSet<MonitoringPost> MonitoringPosts { get; set; }
     public DbSet<SensorType> SensorTypes { get; set; }
     public DbSet<Sensor> Sensors { get; set; }
+    public DbSet<WebPart> WebParts { get; set; }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        // Настройка схем для новых таблиц
-        modelBuilder.Entity<MonitoringPost>().ToTable("MonitoringPost", "public");
+        // Настройка WebPart
+        modelBuilder.Entity<WebPart>(entity =>
+        {
+            entity.ToTable("WebParts");
+            entity.Property(e => e.Settings)
+                .HasConversion(
+                    v => JsonConvert.SerializeObject(v),
+                    v => JsonConvert.DeserializeObject<Dictionary<string, object>>(v) ?? new Dictionary<string, object>());
+        });
+
+        // Настройка схем для новых таблиц        modelBuilder.Entity<MonitoringPost>().ToTable("MonitoringPost", "public");
         modelBuilder.Entity<SensorType>().ToTable("SensorType", "public");
         modelBuilder.Entity<Sensor>().ToTable("Sensor", "public");
         

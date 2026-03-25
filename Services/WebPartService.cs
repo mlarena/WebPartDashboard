@@ -1,246 +1,126 @@
 using Newtonsoft.Json;
 using WebPartDashboard.Models;
+using WebPartDashboard.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace WebPartDashboard.Services;
 
 /// <summary>
 /// Сервис для управления конфигурацией и данными веб-частей.
-/// Использует In-memory хранилище для демонстрационных целей.
+/// Теперь использует базу данных PostgreSQL для хранения настроек пользователей.
 /// </summary>
 public class WebPartService : IWebPartService
 {
-    // Хранилище веб-частей в памяти: Dictionary<UserId, List<WebPart>>
-    private static readonly Dictionary<int, List<WebPart>> _userWebParts = new();
-    private static int _nextId = 1;
-    private static readonly object _lock = new object();
+    private readonly ApplicationDbContext _context;
     private readonly ILogger<WebPartService> _logger;
 
-    public WebPartService(ILogger<WebPartService> logger)
+    public WebPartService(ApplicationDbContext context, ILogger<WebPartService> logger)
     {
+        _context = context;
         _logger = logger;
-        
-        lock (_lock)
-        {
-            // Инициализация демо-данных при первом запуске
-            if (_userWebParts.Count == 0)
-            {
-                InitializeDemoData();
-            }
-        }
     }
 
-    /// <summary>
-    /// Создание начального набора веб-частей для демонстрации.
-    /// </summary>
-    private void InitializeDemoData()
+    public async Task<List<WebPart>> GetUserWebPartsAsync(int userId)
     {
-        var demoWebParts = new List<WebPart>
+        var webParts = await _context.WebParts
+            .Where(w => w.UserId == userId)
+            .OrderBy(w => w.PositionY)
+            .ThenBy(w => w.PositionX)
+            .ToListAsync();
+
+        // Если у пользователя нет веб-частей, создаем дефолтный набор
+        if (!webParts.Any())
         {
-            new()
-            {
-                Id = _nextId++,
-                Title = "Активные проекты",
-                Type = WebPartType.DataTable,
-                PositionX = 0,
-                PositionY = 0,
-                Width = 4,
-                Height = 3,
-                Data = GetDefaultData(WebPartType.DataTable)
-            },
-            new()
-            {
-                Id = _nextId++,
-                Title = "Статистика выполнения",
-                Type = WebPartType.Chart,
-                PositionX = 4,
-                PositionY = 0,
-                Width = 4,
-                Height = 3,
-                Data = GetDefaultData(WebPartType.Chart)
-            },
-            new()
-            {
-                Id = _nextId++,
-                Title = "Системные уведомления",
-                Type = WebPartType.Informer,
-                PositionX = 0,
-                PositionY = 3,
-                Width = 8,
-                Height = 2,
-                Data = GetDefaultData(WebPartType.Informer)
-            }
+            await InitializeDefaultWebPartsAsync(userId);
+            webParts = await _context.WebParts.Where(w => w.UserId == userId).ToListAsync();
+        }
+
+        return webParts;
+    }
+
+    private async Task InitializeDefaultWebPartsAsync(int userId)
+    {
+        var defaults = new List<WebPart>
+        {
+            new() { UserId = userId, Title = "Активные проекты", Type = WebPartType.DataTable, PositionX = 0, PositionY = 0, Width = 6, Height = 4, Data = GetDefaultData(WebPartType.DataTable) },
+            new() { UserId = userId, Title = "Статистика", Type = WebPartType.Chart, PositionX = 6, PositionY = 0, Width = 6, Height = 4, Data = GetDefaultData(WebPartType.Chart) },
+            new() { UserId = userId, Title = "Задачи", Type = WebPartType.Tasks, PositionX = 0, PositionY = 4, Width = 12, Height = 5, Data = GetDefaultData(WebPartType.Tasks) }
         };
-        
-        _userWebParts[1] = demoWebParts;
-        _logger.LogInformation("Демо-данные инициализированы: {Count} веб-частей", demoWebParts.Count);
+
+        _context.WebParts.AddRange(defaults);
+        await _context.SaveChangesAsync();
     }
 
-    /// <summary>
-    /// Получение всех веб-частей конкретного пользователя.
-    /// </summary>
-    public Task<List<WebPart>> GetUserWebPartsAsync(int userId)
+    public async Task<WebPart> AddWebPartAsync(int userId, WebPartType type, string title)
     {
-        lock (_lock)
+        var webPart = new WebPart
         {
-            if (!_userWebParts.ContainsKey(userId))
-                _userWebParts[userId] = new List<WebPart>();
-            
-            return Task.FromResult(_userWebParts[userId].ToList());
-        }
-    }
-
-    /// <summary>
-    /// Добавление новой веб-части с параметрами по умолчанию.
-    /// </summary>
-    public Task<WebPart> AddWebPartAsync(int userId, WebPartType type, string title)
-    {
-        lock (_lock)
-        {
-            if (!_userWebParts.ContainsKey(userId))
-                _userWebParts[userId] = new List<WebPart>();
-            
-            var webPart = new WebPart
-            {
-                Id = _nextId++,
-                Title = string.IsNullOrEmpty(title) ? GetDefaultTitle(type) : title,
-                Type = type,
-                PositionX = 0,
-                PositionY = _userWebParts[userId].Count,
-                Width = (type == WebPartType.Tasks || type == WebPartType.Monitoring) ? 12 : 6,
-                Height = (type == WebPartType.Tasks || type == WebPartType.Monitoring) ? 5 : 4,
-                Settings = new Dictionary<string, object>(),
-                Data = GetDefaultData(type)
-            };
-            _userWebParts[userId].Add(webPart);
-            _logger.LogInformation("Добавлена веб-часть: {Title} (ID: {Id})", webPart.Title, webPart.Id);
-            
-            return Task.FromResult(webPart);
-        }
-    }
-
-    /// <summary>
-    /// Возвращает заголовок по умолчанию для типа веб-части.
-    /// </summary>
-    private string GetDefaultTitle(WebPartType type)
-    {
-        return type switch
-        {
-            WebPartType.DataTable => "Таблица данных",
-            WebPartType.Chart => "График",
-            WebPartType.Informer => "Информер",
-            WebPartType.Tasks => "Управление задачами",
-            WebPartType.Monitoring => "Посты мониторинга",
-            _ => "Новая веб-часть"
+            UserId = userId,
+            Title = string.IsNullOrEmpty(title) ? GetDefaultTitle(type) : title,
+            Type = type,
+            PositionX = 0,
+            PositionY = 100, // В конец
+            Width = (type == WebPartType.Tasks || type == WebPartType.Monitoring) ? 12 : 6,
+            Height = (type == WebPartType.Tasks || type == WebPartType.Monitoring) ? 5 : 4,
+            Data = GetDefaultData(type)
         };
-    }
-    /// <summary>
-    /// Генерирует демонстрационные данные в формате JSON для разных типов веб-частей.
-    /// </summary>
-    private string GetDefaultData(WebPartType type)
-    {
-        return type switch
-        {
-            WebPartType.DataTable => JsonConvert.SerializeObject(new
-            {
-                Columns = new[] { "ID", "Название", "Статус", "Дата создания", "Ответственный" },
-                Rows = new[]
-                {
-                    new[] { "1", "Разработка дашборда", "В работе", "2024-01-10", "Иванов И." },
-                    new[] { "2", "Тестирование модуля", "Завершен", "2024-01-15", "Петров П." },
-                    new[] { "3", "Внедрение системы", "Планируется", "2024-02-01", "Сидоров С." },
-                    new[] { "4", "Обучение персонала", "В работе", "2024-01-20", "Кузнецова А." },
-                    new[] { "5", "Написание документации", "Отложено", "2024-01-25", "Волков В." }
-                }
-            }),
-            
-            WebPartType.Chart => JsonConvert.SerializeObject(new
-            {
-                type = "bar",
-                labels = new[] { "Янв", "Фев", "Мар", "Апр", "Май", "Июн" },
-                data = new[] { 45, 62, 78, 85, 92, 88 },
-                backgroundColor = "rgba(54, 162, 235, 0.5)",
-                borderColor = "rgba(54, 162, 235, 1)"
-            }),            
-            WebPartType.Informer => JsonConvert.SerializeObject(new
-            {
-                Message = "Добро пожаловать в систему управления проектами!",
-                Type = "info",
-                LastUpdate = DateTime.Now,
-                Details = new[]
-                {
-                    "У вас 3 новых уведомления",
-                    "2 задачи требуют внимания",
-                    "Система работает стабильно"
-                }
-            }),
-            
-            WebPartType.Tasks => JsonConvert.SerializeObject(new { Type = "tasks" }),
-            WebPartType.Monitoring => JsonConvert.SerializeObject(new { Type = "monitoring" }),
-            _ => "{}"
-        };
-    }
-    /// <summary>
-    /// Обновление параметров веб-части (заголовок, позиция, размер).
-    /// </summary>
-    public Task UpdateWebPartAsync(WebPart webPart)
-    {
-        lock (_lock)
-        {
-            foreach (var userWebParts in _userWebParts.Values)
-            {
-                var existing = userWebParts.FirstOrDefault(w => w.Id == webPart.Id);
-                if (existing != null)
-                {
-                    existing.Title = webPart.Title;
-                    existing.PositionX = webPart.PositionX;
-                    existing.PositionY = webPart.PositionY;
-                    existing.Width = webPart.Width;
-                    existing.Height = webPart.Height;
-                    existing.Settings = webPart.Settings;
-                    existing.Data = webPart.Data;
-                    break;
-                }
-            }
-        }
-        return Task.CompletedTask;
+
+        _context.WebParts.Add(webPart);
+        await _context.SaveChangesAsync();
+        return webPart;
     }
 
-    /// <summary>
-    /// Удаление веб-части из списка пользователя.
-    /// </summary>
-    public Task RemoveWebPartAsync(int webPartId)
+    public async Task UpdateWebPartAsync(WebPart webPart)
     {
-        lock (_lock)
+        var existing = await _context.WebParts.FindAsync(webPart.Id);
+        if (existing != null)
         {
-            foreach (var userWebParts in _userWebParts.Values)
-            {
-                var webPart = userWebParts.FirstOrDefault(w => w.Id == webPartId);
-                if (webPart != null)
-                {
-                    userWebParts.Remove(webPart);
-                    _logger.LogInformation("Удалена веб-часть с ID: {Id}", webPartId);
-                    break;
-                }
-            }
+            existing.Title = webPart.Title;
+            existing.PositionX = webPart.PositionX;
+            existing.PositionY = webPart.PositionY;
+            existing.Width = webPart.Width;
+            existing.Height = webPart.Height;
+            existing.Settings = webPart.Settings;
+            await _context.SaveChangesAsync();
         }
-        return Task.CompletedTask;
     }
 
-    /// <summary>
-    /// Десериализация данных веб-части для отправки на клиент.
-    /// </summary>
-    public Task<object> GetWebPartDataAsync(WebPart webPart)
+    public async Task RemoveWebPartAsync(int webPartId)
+    {
+        var webPart = await _context.WebParts.FindAsync(webPartId);
+        if (webPart != null)
+        {
+            _context.WebParts.Remove(webPart);
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task<object> GetWebPartDataAsync(WebPart webPart)
     {
         try
         {
-            var data = JsonConvert.DeserializeObject<object>(webPart.Data);
-            return Task.FromResult(data ?? new object());
+            return JsonConvert.DeserializeObject<object>(webPart.Data) ?? new object();
         }
-        catch (Exception ex)
+        catch
         {
-            _logger.LogError(ex, "Ошибка при десериализации данных веб-части {Id}", webPart.Id);
-            return Task.FromResult<object>(new { Error = "Ошибка загрузки данных" });
+            return new { Error = "Ошибка данных" };
         }
     }
+
+    private string GetDefaultTitle(WebPartType type) => type switch {
+        WebPartType.DataTable => "Таблица данных",
+        WebPartType.Chart => "График",
+        WebPartType.Informer => "Информер",
+        WebPartType.Tasks => "Задачи",
+        WebPartType.Monitoring => "Мониторинг",
+        _ => "Новая панель"
+    };
+
+    private string GetDefaultData(WebPartType type) => type switch {
+        WebPartType.DataTable => JsonConvert.SerializeObject(new { Columns = new[] { "ID", "Имя" }, Rows = new[] { new[] { "1", "Демо" } } }),
+        WebPartType.Chart => JsonConvert.SerializeObject(new { type = "bar", labels = new[] { "А", "Б" }, data = new[] { 10, 20 } }),
+        WebPartType.Informer => JsonConvert.SerializeObject(new { message = "Система готова", type = "info" }),
+        _ => "{}"
+    };
 }

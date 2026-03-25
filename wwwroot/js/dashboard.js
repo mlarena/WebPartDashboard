@@ -32,15 +32,21 @@ const DashboardCore = {
                 cellHeight: '120px',
                 verticalMargin: 15,
                 minRow: 3,
-                disableDrag: false,
-                disableResize: false,
+                disableDrag: true, // По умолчанию выключено
+                disableResize: true, // По умолчанию выключено
                 draggable: { handle: '.card-header', scroll: true, appendTo: 'body' },
                 resizable: { handles: 'e, se, s, sw, w' },
                 animate: true
             });
             
-            grid.on('change', (event, items) => {
-                if (!items || !Array.isArray(items)) return;
+            // Обработка переключателя режима редактирования
+            $('#editModeSwitch').on('change', function() {
+                const isEdit = $(this).is(':checked');
+                grid.setStatic(!isEdit);
+                $('.webpart').toggleClass('edit-mode', isEdit);
+            });
+
+            grid.on('change', (event, items) => {                if (!items || !Array.isArray(items)) return;
                 items.forEach(item => {
                     if (item.id) {
                         this.api.updatePosition(item.id, item.x, item.y);
@@ -55,8 +61,22 @@ const DashboardCore = {
         $(document).ajaxError((event, xhr, settings, error) => {
             console.error('AJAX Error:', error, settings.url);
         });
-    },
 
+        // Переключение темы
+        $('#themeToggle').on('click', () => {
+            const html = $('html');
+            const currentTheme = html.attr('data-bs-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.attr('data-bs-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            $('#themeToggle i').toggleClass('bi-moon-stars bi-sun');
+        });
+
+        // Восстановление темы
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        $('html').attr('data-bs-theme', savedTheme);
+        if (savedTheme === 'dark') $('#themeToggle i').addClass('bi-sun').removeClass('bi-moon-stars');
+    },
     loadAllWebParts: function() {
         $('.grid-stack-item[gs-id]').each((index, el) => {
             const id = $(el).attr('gs-id');
