@@ -1,4 +1,7 @@
-namespace WebPartDashboard.Models;
+namespace WebPartDashboard.Models.ViewModels;
+
+using WebPartDashboard.Models;
+using WebPartDashboard.Models.Entities;
 
 public class DashboardViewModel
 {

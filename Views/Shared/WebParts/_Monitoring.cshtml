@@ -1,8 +1,7 @@
-@model List<MonitoringPost>
+@model List<WebPartDashboard.Models.Entities.MonitoringPost>
 @{
     var uniqueId = Guid.NewGuid().ToString("N");
 }
-
 <div class="monitoring-webpart d-flex flex-column h-100" id="monitoring-container-@uniqueId">
     <div class="mb-2">
         <div class="d-flex justify-content-between align-items-center">

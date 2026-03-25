@@ -1,30 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
-using WebPartDashboard.Models;
-using WebPartDashboard.Services;
+using WebPartDashboard.Models.Entities;
+using WebPartDashboard.Services.DataProviders;
 
-namespace WebPartDashboard.Controllers;
-
-public class MonitoringController : Controller
-{
-    private readonly IMonitoringService _monitoringService;
-
-    public MonitoringController(IMonitoringService monitoringService)
-    {
-        _monitoringService = monitoringService;
-    }
-
-    public async Task<IActionResult> GetMonitoringWebPart()
-    {
-        try 
-        {
-            var posts = await _monitoringService.GetAllPostsAsync();
-            return PartialView("_MonitoringWebPart", posts);
-        }
-        catch (Exception ex)
-        {
-            return Content($"<div class='alert alert-danger'>Ошибка сервера: {ex.Message}</div>");
-        }
-    }}
+namespace WebPartDashboard.Controllers.Api;
 
 [ApiController]
 [Route("api/[controller]")]

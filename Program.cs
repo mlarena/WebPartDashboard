@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using WebPartDashboard.Data;
 using WebPartDashboard.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
+using WebPartDashboard.Services.DataProviders;
+using Microsoft.AspNetCore.Authentication.JwtBearer;using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
 // Включаем поддержку старого поведения DateTime для PostgreSQL

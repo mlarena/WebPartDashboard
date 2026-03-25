@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace WebPartDashboard.Models;
+namespace WebPartDashboard.Models.Entities;
 
 public class TaskItem
 {

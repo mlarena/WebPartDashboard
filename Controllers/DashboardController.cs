@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using WebPartDashboard.Models;
+using WebPartDashboard.Models.Entities;
+using WebPartDashboard.Models.ViewModels;
 using WebPartDashboard.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Authorization;

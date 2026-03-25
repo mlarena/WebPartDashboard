@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using WebPartDashboard.Services;
+using WebPartDashboard.Services.DataProviders;
 
-namespace WebPartDashboard.Controllers;
+namespace WebPartDashboard.Controllers.WebParts;
 
 public class TasksController : Controller
 {
@@ -19,8 +19,8 @@ public class TasksController : Controller
     {
         try
         {
-            var tasks = await _taskService.GetAllTasksAsync();
-            return PartialView("_TasksWebPart", tasks);
+            var tasks = await _taskService.GetAllTasksAsync(0, 10);
+            return PartialView("~/Views/Shared/WebParts/_Tasks.cshtml", tasks);
         }
         catch (Exception ex)
         {

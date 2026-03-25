@@ -1,9 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
-using WebPartDashboard.Models;
-using WebPartDashboard.Services;
+using WebPartDashboard.Models.Entities;
+using WebPartDashboard.Services.DataProviders;
 
-namespace WebPartDashboard.Controllers;
-
+namespace WebPartDashboard.Controllers.Api;
 /// <summary>
 /// API контроллер для управления задачами.
 /// Обеспечивает CRUD операции, получение статистики и пагинацию.

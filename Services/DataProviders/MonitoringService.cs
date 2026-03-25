@@ -1,9 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using WebPartDashboard.Data;
-using WebPartDashboard.Models;
+using WebPartDashboard.Models.Entities;
 
-namespace WebPartDashboard.Services;
-
+namespace WebPartDashboard.Services.DataProviders;
 public interface IMonitoringService
 {
     Task<List<MonitoringPost>> GetAllPostsAsync();

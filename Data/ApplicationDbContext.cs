@@ -1,10 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using WebPartDashboard.Models;
-using TaskStatus = WebPartDashboard.Models.TaskStatus;
-using TaskPriority = WebPartDashboard.Models.TaskPriority;
-
+using WebPartDashboard.Models.Entities;
+using TaskStatus = WebPartDashboard.Models.Entities.TaskStatus;
+using TaskPriority = WebPartDashboard.Models.Entities.TaskPriority;
 namespace WebPartDashboard.Data;
-
 public class ApplicationDbContext : DbContext
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)

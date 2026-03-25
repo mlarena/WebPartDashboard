@@ -1,10 +1,9 @@
-@model List<TaskItem>
+@model List<WebPartDashboard.Models.Entities.TaskItem>
 @{
     // Генерация уникального ID для каждого экземпляра веб-части, 
     // чтобы избежать конфликтов при наличии нескольких таких частей на дашборде.
     var uniqueId = Guid.NewGuid().ToString("N");
 }
-
 <!-- Основной контейнер веб-части задач с использованием Flexbox для динамической высоты -->
 <div class="tasks-webpart d-flex flex-column h-100" id="tasks-container-@uniqueId">
     

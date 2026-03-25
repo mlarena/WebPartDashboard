@@ -1,10 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using WebPartDashboard.Data;
-using WebPartDashboard.Models;
-using TaskStatus = WebPartDashboard.Models.TaskStatus;
-using TaskPriority = WebPartDashboard.Models.TaskPriority;
+using WebPartDashboard.Models.Entities;
+using TaskStatus = WebPartDashboard.Models.Entities.TaskStatus;
+using TaskPriority = WebPartDashboard.Models.Entities.TaskPriority;
 
-namespace WebPartDashboard.Services;
+namespace WebPartDashboard.Services.DataProviders;
 
 /// <summary>
 /// Сервис для работы с задачами в базе данных PostgreSQL.
