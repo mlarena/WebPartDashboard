@@ -33,13 +33,12 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<TaskItem>()
             .HasIndex(t => t.AssignedTo);
 
-        // Добавляем базовые типы датчиков
+        // Добавляем базовые типы датчиков с фиксированными датами
         modelBuilder.Entity<SensorType>().HasData(
-            new SensorType { Id = 1, SensorTypeName = "Температура", Description = "Датчик температуры воздуха", CreatedAt = DateTime.Now },
-            new SensorType { Id = 2, SensorTypeName = "Влажность", Description = "Датчик влажности воздуха", CreatedAt = DateTime.Now },
-            new SensorType { Id = 3, SensorTypeName = "Давление", Description = "Датчик атмосферного давления", CreatedAt = DateTime.Now }
+            new SensorType { Id = 1, SensorTypeName = "Температура", Description = "Датчик температуры воздуха", CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+            new SensorType { Id = 2, SensorTypeName = "Влажность", Description = "Датчик влажности воздуха", CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+            new SensorType { Id = 3, SensorTypeName = "Давление", Description = "Датчик атмосферного давления", CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
         );
-
         modelBuilder.Entity<User>()
             .HasIndex(u => u.UserName)
             .IsUnique();

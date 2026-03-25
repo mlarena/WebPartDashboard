@@ -1,0 +1,83 @@
+-- Более быстрый вариант с использованием generate_series
+INSERT INTO public."Tasks" (
+    "Title",
+    "Description",
+    "Status",
+    "Priority",
+    "CreatedAt",
+    "DueDate",
+    "AssignedTo",
+    "IsCompleted"
+)
+SELECT 
+    -- Title
+    'Задача ' || i || ': ' || 
+    CASE (floor(random() * 5)::INT)
+        WHEN 0 THEN 'Разработка функционала'
+        WHEN 1 THEN 'Исправление бага'
+        WHEN 2 THEN 'Тестирование'
+        WHEN 3 THEN 'Документация'
+        ELSE 'Код-ревью'
+    END AS Title,
+    
+    -- Description
+    CASE 
+        WHEN random() < 0.5 THEN NULL
+        ELSE 'Подробное описание задачи ' || i || '. Необходимо выполнить в срок. ' ||
+             'Дополнительные требования: ' ||
+             CASE (floor(random() * 3)::INT)
+                 WHEN 0 THEN 'высокое качество'
+                 WHEN 1 THEN 'быстрая реализация'
+                 ELSE 'полное покрытие тестами'
+             END
+    END AS Description,
+    
+    -- Status
+    floor(random() * 4)::INT AS Status,
+    
+    -- Priority
+    floor(random() * 4)::INT AS Priority,
+    
+    -- CreatedAt
+    NOW() - (random() * INTERVAL '90 days') AS CreatedAt,
+    
+    -- DueDate
+    CASE 
+        WHEN random() < 0.3 THEN NULL
+        ELSE (NOW() - (random() * INTERVAL '90 days')) + (random() * INTERVAL '60 days')
+    END AS DueDate,
+    
+    -- AssignedTo
+    CASE 
+        WHEN random() < 0.6 THEN NULL
+        ELSE CASE (floor(random() * 8)::INT)
+            WHEN 0 THEN 'ivan.ivanov'
+            WHEN 1 THEN 'petr.petrov'
+            WHEN 2 THEN 'anna.sidorova'
+            WHEN 3 THEN 'elena.smirnova'
+            WHEN 4 THEN 'alexey.kuznetsov'
+            WHEN 5 THEN 'maria.volkova'
+            WHEN 6 THEN 'dmitry.mikhailov'
+            ELSE 'olga.novikova'
+        END
+    END AS AssignedTo,
+    
+    -- IsCompleted
+    CASE 
+        WHEN floor(random() * 4)::INT = 3 OR (floor(random() * 4)::INT = 2 AND random() < 0.7) 
+        THEN TRUE 
+        ELSE FALSE 
+    END AS IsCompleted
+    
+FROM generate_series(1, 10000) AS i;
+
+-- Проверка результатов
+SELECT 
+    COUNT(*) AS total_records,
+    COUNT("Description") AS has_description,
+    COUNT("AssignedTo") AS has_assigned_to,
+    COUNT("DueDate") AS has_due_date,
+    COUNT(CASE WHEN "IsCompleted" THEN 1 END) AS completed_tasks,
+    MIN("CreatedAt") AS earliest_created,
+    MAX("CreatedAt") AS latest_created
+FROM public."Tasks";

@@ -107,12 +107,11 @@ public class WebPartService : IWebPartService
                 Type = type,
                 PositionX = 0,
                 PositionY = _userWebParts[userId].Count,
-                Width = 4,
-                Height = 3,
+                Width = (type == WebPartType.Tasks || type == WebPartType.Monitoring) ? 12 : 6,
+                Height = (type == WebPartType.Tasks || type == WebPartType.Monitoring) ? 5 : 4,
                 Settings = new Dictionary<string, object>(),
                 Data = GetDefaultData(type)
             };
-
             _userWebParts[userId].Add(webPart);
             _logger.LogInformation("Добавлена веб-часть: {Title} (ID: {Id})", webPart.Title, webPart.Id);
             

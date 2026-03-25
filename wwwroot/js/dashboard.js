@@ -89,12 +89,16 @@ const DashboardCore = {
     api: {
         add: function(type, title) {
             $.post('/Dashboard/AddWebPart', { type: type, title: title || '' }, (html) => {
-                const el = grid.addWidget($(html)[0]);
+                const $newWidget = $(html);
+                // Извлекаем размеры из атрибутов gs-w и gs-h, которые приходят с сервера
+                const w = parseInt($newWidget.attr('gs-w')) || 6;
+                const h = parseInt($newWidget.attr('gs-h')) || 4;
+                
+                const el = grid.addWidget($newWidget[0], { w: w, h: h });
                 const id = $(el).attr('gs-id');
                 if (id) DashboardCore.loadWebPartData(parseInt(id));
             });
-        },
-        remove: function(id) {
+        },        remove: function(id) {
             if (confirm('Удалить веб-часть?')) {
                 $.post('/Dashboard/RemoveWebPart', { webPartId: id }, () => {
                     grid.removeWidget($(`.grid-stack-item[gs-id="${id}"]`)[0]);
