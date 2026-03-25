@@ -28,12 +28,13 @@ const DashboardCore = {
 
     initGridStack: function() {
         if ($('#dashboard-grid').length) {
+            const isEditInitial = $('#editModeSwitch').is(':checked');
+            
             grid = GridStack.init({
                 cellHeight: '120px',
                 verticalMargin: 15,
                 minRow: 3,
-                disableDrag: true, // По умолчанию выключено
-                disableResize: true, // По умолчанию выключено
+                staticGrid: !isEditInitial,
                 draggable: { handle: '.card-header', scroll: true, appendTo: 'body' },
                 resizable: { handles: 'e, se, s, sw, w' },
                 animate: true
@@ -42,11 +43,14 @@ const DashboardCore = {
             // Обработка переключателя режима редактирования
             $('#editModeSwitch').on('change', function() {
                 const isEdit = $(this).is(':checked');
-                grid.setStatic(!isEdit);
+                if (grid) {
+                    grid.setStatic(!isEdit);
+                }
                 $('.webpart').toggleClass('edit-mode', isEdit);
             });
 
-            grid.on('change', (event, items) => {                if (!items || !Array.isArray(items)) return;
+            grid.on('change', (event, items) => {
+                if (!items || !Array.isArray(items)) return;
                 items.forEach(item => {
                     if (item.id) {
                         this.api.updatePosition(item.id, item.x, item.y);
@@ -56,7 +60,6 @@ const DashboardCore = {
             });
         }
     },
-
     setupGlobalEvents: function() {
         $(document).ajaxError((event, xhr, settings, error) => {
             console.error('AJAX Error:', error, settings.url);
@@ -67,17 +70,29 @@ const DashboardCore = {
             const html = $('html');
             const currentTheme = html.attr('data-bs-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
             html.attr('data-bs-theme', newTheme);
             localStorage.setItem('theme', newTheme);
-            $('#themeToggle i').toggleClass('bi-moon-stars bi-sun');
+            
+            // Обновляем иконку
+            const $icon = $('#themeToggle i');
+            if (newTheme === 'dark') {
+                $icon.removeClass('bi-moon-stars').addClass('bi-sun');
+            } else {
+                $icon.removeClass('bi-sun').addClass('bi-moon-stars');
+            }
         });
 
-        // Восстановление темы
+        // Восстановление темы при загрузке
         const savedTheme = localStorage.getItem('theme') || 'light';
         $('html').attr('data-bs-theme', savedTheme);
-        if (savedTheme === 'dark') $('#themeToggle i').addClass('bi-sun').removeClass('bi-moon-stars');
-    },
-    loadAllWebParts: function() {
+        const $icon = $('#themeToggle i');
+        if (savedTheme === 'dark') {
+            $icon.removeClass('bi-moon-stars').addClass('bi-sun');
+        } else {
+            $icon.removeClass('bi-sun').addClass('bi-moon-stars');
+        }
+    },    loadAllWebParts: function() {
         $('.grid-stack-item[gs-id]').each((index, el) => {
             const id = $(el).attr('gs-id');
             if (id) this.loadWebPartData(parseInt(id));
